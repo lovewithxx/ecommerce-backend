@@ -1,0 +1,23 @@
+# ============================================================
+# 安装（清华源，别用官方源）：
+#   .\.venv\Scripts\python.exe -m pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+# ============================================================
+
+# Web 框架
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+
+# 异步 SQLAlchemy + MySQL 驱动
+sqlalchemy[asyncio]>=2.0.30
+aiomysql>=0.2.0
+# MySQL 8 默认用 caching_sha2_password 认证，没有它会报 Authentication plugin 错误
+cryptography>=42.0.0
+
+# 配置与密码
+pydantic-settings>=2.2.0
+python-dotenv>=1.0.0
+
+# 密码哈希：passlib 1.7.4 + bcrypt 4.0.1 是已知可用组合
+# 千万别升到 bcrypt 4.1+，会报 module bcrypt has no attribute __about__
+passlib==1.7.4
+bcrypt==4.0.1
