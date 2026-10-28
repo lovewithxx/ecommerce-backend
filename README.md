@@ -1,13 +1,13 @@
-# 简易商城 · 用户模块
+# 智能商城 · 用户、商品模块
 
-FastAPI + MySQL 异步。目前完成：**注册 / 登录 / 退出 / 查看信息 / 修改信息 / 修改密码** + 一个可点击的前端。
+FastAPI + MySQL 异步。目前完成：**注册 / 登录 / 退出 / 查看信息 / 修改信息 / 修改密码 / 商品分类展示 / 商品详情** + 简易可点击的前端。
 
 ---
 
 ##运行
-
+在项目文件夹内
 ```powershell
-cd C:\Users\lyt2001\Desktop\ec_platform
+
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
 ```
 
@@ -21,15 +21,15 @@ cd C:\Users\lyt2001\Desktop\ec_platform
 
 ---
 
-## 前端（先弄个最小可演示案例）
+## 前端（简易可演示案例）
 
 单个 HTML 文件（web/index.html），FastAPI 直接托管，没有 npm、没有打包。
 
 底部 7 个标签页：
 
 | 标签 | 内容 | 数据来源 |
-| 首页 | 搜索框 + 商品网格 |商品数据 |
-| 分类 | 8 个分类，点击筛选 | 对应类型的数据 |
+| 首页 | 搜索框 + **商品网格 |商品数据** |
+| 分类 | **8 个分类，点击筛选 | 对应类型的数据** |
 | 收藏 | 收藏的商品 | 浏览器 localStorage |
 | 购物车 | 加减数量、合计、去结算 | 浏览器 localStorage |
 | 订单 | 下单记录、取消 | 浏览器 localStorage |
@@ -65,7 +65,7 @@ cd C:\Users\lyt2001\Desktop\ec_platform
 ```
 ec_platform/
 ├── .env                    配置（数据库密码等）
-├── requestment.txt         依赖清单（建议改 requirements.txt）
+├── requestment.txt         依赖清单
 ├── app/
 │   ├── main.py             入口：生命周期 + 异常处理器 + 静态页
 │   ├── config/
