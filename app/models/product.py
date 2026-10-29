@@ -1,13 +1,5 @@
 """
 商品与分类的 ORM 模型。
-
-=====================================================================
-【两张表的关系】
-=====================================================================
-    category 1 --- N product      一个分类下有多个商品
-
-建表后如果分类名要改，商品不受影响（只存 category_id）。
-=====================================================================
 """
 
 from datetime import datetime
@@ -29,9 +21,8 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
 
-
+#商品分类
 class Category(Base):
-    """商品分类。"""
 
     __tablename__ = 'category'
 
@@ -54,18 +45,8 @@ class Category(Base):
         return f"<Category(id={self.id}, name='{self.name}')>"
 
 
+#商品
 class Product(Base):
-    """
-    商品。
-
-    ★ 单规格模型，不做 SKU ★
-        一个商品就是一个价格、一个库存。
-        要"颜色+容量"多规格的话需要再加 product_sku 表，购物车和订单都要改。
-
-    ★ 价格用 DECIMAL(10,2)，单位是「元」★
-        绝不能用 FLOAT：0.1 + 0.2 会变成 0.30000000000000004。
-        Python 端读取时拿到的是 Decimal，参与运算也用 Decimal。
-    """
 
     __tablename__ = 'product'
 
@@ -74,7 +55,6 @@ class Product(Base):
         Index("idx_product_status", "status"),
         Index("idx_product_price", "price"),
         Index("idx_product_sales", "sales"),
-        # 关键字搜索用（name 是 varchar(200)，MySQL 8 索引前缀上限足够）
         Index("idx_product_name", "name"),
     )
 

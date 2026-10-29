@@ -35,6 +35,7 @@ from sqlalchemy import text
 from app.config.app_conf import settings
 from app.config.db_conf import async_engine
 from app.routers import category as category_router
+from app.routers import favorite as favorite_router
 from app.routers import product as product_router
 from app.routers import user as user_router
 from app.untils.exception import register_exception_handlers
@@ -54,15 +55,6 @@ logger = logging.getLogger("ec_platform")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """
-    生命周期钩子：启动时执行 yield 之前，关闭时执行 yield 之后。
-
-    为什么在这里探一次数据库：
-        配错密码/库名是最高频的问题，启动时立刻报出来，
-        比等第一个请求进来才崩好得多。
-        这里用"记录错误但不阻止启动"的策略 —— 让你能看到完整的报错提示，
-        而不是一个裸的 traceback。
-    """
     try:
         async with async_engine.connect() as conn:
             await conn.execute(text("SELECT 1"))
@@ -88,11 +80,12 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# ★ 异常处理器必须在挂路由之前注册 ★
+#异常处理器必须在挂路由之前注册 
 register_exception_handlers(app)
 
 # 挂载路由
 app.include_router(user_router.router)
+app.include_router(favorite_router.router)
 app.include_router(category_router.router)
 app.include_router(product_router.router)
 
@@ -107,8 +100,6 @@ app.mount("/images", StaticFiles(directory=str(IMAGES_DIR)), name="images")
 # 本项目认证走 Cookie，所以：
 #   1. allow_credentials=True 必须为 True，否则浏览器不会保存/携带 Cookie
 #   2. allow_origins 不能写 "*"，必须列出具体来源（浏览器规范禁止两者同时用）
-#   3. localhost 和 127.0.0.1 是两个不同的 origin，两边都要写
-# 如果前端由 FastAPI 自己托管（同源访问 8000 端口），这一段其实用不上。
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[

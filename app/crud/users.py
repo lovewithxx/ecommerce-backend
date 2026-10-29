@@ -42,8 +42,8 @@ async def create_user(
         status=1,
     )
     db.add(user)
-    await db.flush()        # 拿到自增 id，但还没提交
-    await db.refresh(user)  # 从库里读回最新值（created_at 等默认值）
+    await db.flush()      
+    await db.refresh(user)  
     return user
 
 
@@ -62,7 +62,7 @@ async def issue_token(db: AsyncSession, user_id: int) -> tuple[str, datetime]:
     if row is None:
         db.add(UserToken(user_id=user_id, token=token, expires_at=expires_at))
     else:
-        row.token = token             # ★ 覆盖旧 token，旧设备随之失效
+        row.token = token             #覆盖旧 token
         row.expires_at = expires_at
     await db.flush()
     return token, expires_at
@@ -107,7 +107,7 @@ async def update_user(db: AsyncSession, user: User, changes: dict) -> User:
 
 async def update_password(db: AsyncSession, user: User, new_password: str) -> None:
     """
-    修改密码。调用前请先在路由层校验旧密码，这里只负责写入。
+    修改密码
     """
     user.password = get_hash_password(new_password)
     await db.flush()
@@ -115,7 +115,7 @@ async def update_password(db: AsyncSession, user: User, new_password: str) -> No
 
 async def revoke_all_tokens(db: AsyncSession, user_id: int) -> int:
     """
-    删除该用户的令牌。
+    删除该用户的令牌
     """
     result = await db.execute(delete(UserToken).where(UserToken.user_id == user_id))
     await db.flush()
@@ -124,12 +124,8 @@ async def revoke_all_tokens(db: AsyncSession, user_id: int) -> int:
 
 async def revoke_token(db: AsyncSession, token: str) -> int:
     """
-    按 token 字符串删除记录（退出登出用）。
+    按 token 字符串删除记录（退出登出）
 
-    ★ 和 get_user_by_token 的区别 ★
-        get_user_by_token 会过滤掉已过期的 token；
-        退出登录时 token 可能已经过期了，但仍然要能从库里删掉，
-        所以这里直接按字符串删，不看过期时间。
     """
     result = await db.execute(delete(UserToken).where(UserToken.token == token))
     await db.flush()

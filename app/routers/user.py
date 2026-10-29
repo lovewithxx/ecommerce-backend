@@ -5,7 +5,6 @@
 【认证方式：HttpOnly Cookie】
 =====================================================================
 登录成功后，后端把 token 写进 Cookie（httponly=True），响应体里【不返回 token】。
-前端 JS 读不到这个 Cookie，也就偷不走 —— XSS 拿不到凭证。
 
 四个接口都要注意 Cookie：
     注册 / 登录   -> set_cookie
@@ -46,17 +45,6 @@ COOKIE_MAX_AGE = crud_users.TOKEN_TTL_DAYS * 24 * 3600   # 与 token 有效期�
 
 
 def _set_token_cookie(resp: Response, token: str) -> Response:
-    """
-    在【最终要返回的那个 Response】上写 Cookie。
-
-    ★ 为什么参数是"要返回的响应"，而不是路由里注入的 response ★
-      FastAPI 里注入 Response 只有在接口"返回普通数据（dict / Pydantic 模型）"时才生效；
-      而本项目接口 return 的是 success_response() 返回的 JSONResponse 对象。
-      一旦返回的是 Response 对象，FastAPI 会原样把它发出去，
-      注入对象上设置的 Cookie / 响应头全部丢失 ——
-      表现就是"登录返回 200，但浏览器压根没收到 Set-Cookie，下次请求还是未登录"。
-      所以必须把 Cookie 设在真正返回的那个对象上。
-    """
     resp.set_cookie(
         key=COOKIE_NAME,
         value=token,
@@ -73,8 +61,6 @@ def _clear_token_cookie(resp: Response) -> Response:
     """
     删除 Cookie。
 
-    ★ 删除时的属性（path / samesite / secure）必须和设置时一致 ★
-      不一致的话浏览器会认为"这不是同一个 cookie"，删不掉。
     """
     resp.delete_cookie(
         key=COOKIE_NAME,
@@ -93,9 +79,9 @@ def _clear_token_cookie(resp: Response) -> Response:
     "/register",
     summary="注册用户",
     description=(
-        "注册成功即自动登录：token 写入 **HttpOnly Cookie**，响应体里不返回 token。\n\n"
-        "**用户名规则**：3~50 位，只能包含字母、数字、下划线\n\n"
-        "**密码规则**：6~32 位，bcrypt 哈希后存储，数据库里看不到明文"
+        "注册成功即自动登录：token 写入HttpOnly Cookie，响应体里不返回 token。\n\n"
+        "用户名规则：3~50 位，只能包含字母、数字、下划线\n\n"
+        "密码规则：6~32 位，bcrypt 哈希后存储，数据库里看不到明文"
     ),
 )
 async def register(
@@ -137,16 +123,15 @@ async def register(
     "/login",
     summary="用户登录",
     description=(
-        "token 写入 **HttpOnly Cookie**，响应体里不返回 token。\n\n"
+        "token 写入HttpOnly Cookie，响应体里不返回 token。\n\n"
         "单设备登录：本次登录会覆盖上一次的 token，旧设备随之被踢下线。\n\n"
-        "失败统一返回 400「用户名或密码错误」，不区分是哪个错，防止撞库。"
+        "失败统一返回 400「用户名或密码错误」"
     ),
 )
 async def login(
     body: LoginRequest,
     db: AsyncSession = Depends(get_db),
 ):
-    # 用户名不存在 和 密码错误 走同一个分支
     user = await crud_users.check_password(db, body.username, body.password)
     if user is None:
         raise HTTPException(
@@ -154,7 +139,6 @@ async def login(
             detail="用户名或密码错误",
         )
 
-    # 状态检查放在密码校验之后，避免探测"账号存在但被禁用"
     if user.status != 1:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -182,12 +166,6 @@ async def logout(
 ):
     """
     退出登录。
-
-    ★ 这个接口故意【不依赖 get_current_user】★
-      如果依赖了，cookie 一失效就会先抛 401，走不到删除 cookie 的那一行，
-      用户就卡在"有个死 cookie 但删不掉"的状态。
-
-    现在的做法：
         cookie 存在   -> 顺手删掉数据库里那条 token
         cookie 不存在 -> 什么也不做
         两种情况都返回 200 并清掉 cookie
@@ -206,7 +184,6 @@ async def logout(
 @router.get("/info", summary="获取当前登录用户信息")
 async def get_info(current: User = Depends(get_current_user)):
     """
-    前端刷新页面后靠这个接口判断"我有没有登录"：
         200 -> 登录着，data 就是用户信息
         401 -> 没登录
     """
@@ -222,7 +199,7 @@ async def get_info(current: User = Depends(get_current_user)):
 @router.put(
     "/info",
     summary="修改账号信息",
-    description="只传要修改的字段，没传的保持不变。username / password / status 不能在这里改。",
+    description="只传要修改的字段，没传的保持不变",
 )
 async def update_info(
     body: UserUpdateRequest,
@@ -266,7 +243,6 @@ async def change_password(
     db: AsyncSession = Depends(get_db),
 ):
     # 1. 校验旧密码
-    #    否则别人拿到你的 cookie 就能直接改密码，把你锁在门外
     if not verify_password(body.old_password, current.password):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -280,11 +256,10 @@ async def change_password(
             detail="新密码不能与原密码相同",
         )
 
-    # 3. 写入新密码（内部会哈希）
+    # 3. 写入新密码（内部哈希）
     await crud_users.update_password(db, current, body.new_password)
 
     # 4. 删掉数据库里的 token + 清掉浏览器 cookie
-    #    只删数据库不清 cookie 的话，浏览器会一直带着失效凭证发请求
     await crud_users.revoke_all_tokens(db, current.id)
 
     logger.info("用户修改密码：id=%s", current.id)

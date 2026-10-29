@@ -1,32 +1,28 @@
-from sqlalchemy import Select, func, select
+"""
+商品的数据库操作。
+
+保留三个函数：
+    get_product_list    列表（分类 + 关键词 + 排序 + 分页）
+    get_product_count   同条件下的总数
+    get_product_by_id   单个商品（详情）
+"""
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.product import Product
 
-# 排序方式 -> ORDER BY 子句
-# default 按销量（首页通常按热度），newest 按 id 倒序（近似上架时间）
+# 排序方式
+#   default     最新上架（id 大的在前）
+#   sales_desc  销量从高到低  ← 名字必须和路由的 Literal、前端传的值三处一致
+#   price_asc   价格从低到高
+#   price_desc  价格从高到低
 SORTS = {
-    "default": Product.sales.desc(),
-    "sales": Product.sales.desc(),
+    "default": Product.id.desc(),
+    "sales_desc": Product.sales.desc(),
     "price_asc": Product.price.asc(),
     "price_desc": Product.price.desc(),
-    "newest": Product.id.desc(),
 }
-
-
-def _build_query(category_id: int | None, keyword: str | None) -> Select:
-    """
-    把筛选条件拼成一个查询。
-    """
-    stmt = select(Product).where(Product.status == 1)
-
-    if category_id is not None:
-        stmt = stmt.where(Product.category_id == category_id)
-
-    if keyword:
-        stmt = stmt.where(Product.name.like(f"%{keyword}%"))
-
-    return stmt
 
 
 async def get_product_list(
@@ -35,11 +31,25 @@ async def get_product_list(
     keyword: str | None = None,
     sort: str = "default",
     skip: int = 0,
-    limit: int = 20,
+    limit: int = 12,
 ) -> list[Product]:
-    """按条件取商品，带排序和分页。"""
-    stmt = _build_query(category_id, keyword)
+    """
+    取商品列表。
+
+    category_id 传 None -> 全部分类（首页）
+    keyword 传空        -> 不按名字筛
+    """
+    stmt = select(Product).where(Product.status == 1)
+
+    if category_id is not None:
+        stmt = stmt.where(Product.category_id == category_id)
+
+    if keyword:
+        # 模糊匹配商品名，% 代表任意字符
+        stmt = stmt.where(Product.name.like(f"%{keyword}%"))
+
     stmt = stmt.order_by(SORTS.get(sort, SORTS["default"]))
+
     stmt = stmt.offset(skip).limit(limit)
 
     result = await db.execute(stmt)
@@ -52,16 +62,17 @@ async def get_product_count(
     keyword: str | None = None,
 ) -> int:
     """
-    同条件下的商品总数（用来算分页的 hasMore）。
-
-    ★ 筛选条件必须和 get_product_list 完全一致 ★
-        否则会出现"列表返回 3 条、总数却是 400"，分页直接算错。
-        所以两边都用 _build_query 拼条件，只差 order_by / offset / limit。
+    同条件下的商品总数，用来算分页。
     """
-    stmt = _build_query(category_id, keyword)
-    count_stmt = select(func.count()).select_from(stmt.subquery())
+    stmt = select(func.count(Product.id)).where(Product.status == 1)
 
-    result = await db.execute(count_stmt)
+    if category_id is not None:
+        stmt = stmt.where(Product.category_id == category_id)
+
+    if keyword:
+        stmt = stmt.where(Product.name.like(f"%{keyword}%"))
+
+    result = await db.execute(stmt)
     return result.scalar_one()
 
 
