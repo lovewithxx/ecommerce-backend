@@ -34,6 +34,7 @@ from sqlalchemy import text
 
 from app.config.app_conf import settings
 from app.config.db_conf import async_engine
+from app.routers import cart as cart_router
 from app.routers import category as category_router
 from app.routers import favorite as favorite_router
 from app.routers import product as product_router
@@ -86,6 +87,7 @@ register_exception_handlers(app)
 # 挂载路由
 app.include_router(user_router.router)
 app.include_router(favorite_router.router)
+app.include_router(cart_router.router)
 app.include_router(category_router.router)
 app.include_router(product_router.router)
 

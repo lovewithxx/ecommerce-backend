@@ -42,7 +42,8 @@ from sqlalchemy import text                                    # noqa: E402
 
 import app.models.users                                        # noqa: F401, E402  ★ 必须导入，否则表不登记
 import app.models.product                                      # noqa: F401, E402  ★ 同理：category / product
-import app.models.favorite                                     # noqa: F401, E402  ★ 同理：favorite
+import app.models.favorite
+import app.models.cart                                     # noqa: F401, E402  ★ 同理：favorite
 from app.config.app_conf import settings                       # noqa: E402
 from app.config.db_conf import async_engine                    # noqa: E402
 from app.models.base import Base                               # noqa: E402

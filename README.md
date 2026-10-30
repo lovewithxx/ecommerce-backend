@@ -1,6 +1,6 @@
 # 智能商城 · 用户、商品模块
 
-FastAPI + MySQL 异步。目前完成：**注册 / 登录 / 退出 / 查看信息 / 修改信息 / 修改密码 / 商品分类展示 / 商品详情 /商品收藏** + 简易可点击的前端。
+FastAPI + MySQL 异步。目前完成：**用户登录系统（httponlycookie鉴权，修改密码和用户信息）/ 商品分类展示 / 商品详情页 /商品收藏 /购物车模块** + 简易可点击的前端。
 
 ---
 
@@ -31,7 +31,7 @@ FastAPI + MySQL 异步。目前完成：**注册 / 登录 / 退出 / 查看信�
 |**首页**| 搜索框 + **商品网格**|**商品数据**|
 |**分类**|**8个分类，商品详情** |**对应类型的数据**|
 |**收藏**|**收藏的商品**|**收藏商品数据**|
-| 购物车 | 加减数量、合计、去结算 | 浏览器 localStorage |
+|**购物车**|**加减数量、合计、去结算**|**对应数据**|
 | 订单 | 下单记录、取消 | 浏览器 localStorage |
 |**我的**|**登录 / 注册 / 资料 / 改信息 / 改密码** | **后端接口** |
 | AI 助手 | 聊天界面占位 | |
@@ -53,10 +53,12 @@ FastAPI + MySQL 异步。目前完成：**注册 / 登录 / 退出 / 查看信�
 | GET | `/api/category/list`|——|获取商品分类|
 | GET | `/api/product/list`|——|获取商品列表|
 | GET | `/api/product/detail`|🔒|获取商品详情|
-| POST | `/api/favorite/add`|——|商品添加收藏|
-| DELETE | `/api/favorite/remove`|——|商品取消收藏|
-| GET | `/api/favorite/list`|——|获取收藏列表|
-| GET | `/api/favorite/check`|——|检查商品是否被收藏|
+| POST | `/api/favorite/add`|🔒|商品添加收藏|
+| DELETE | `/api/favorite/remove`|🔒|商品取消收藏|
+| GET | `/api/favorite/list`|🔒|获取收藏列表|
+| GET | `/api/favorite/check`|🔒|检查商品是否被收藏|
+##购物车路由
+明天再写
 
 
 
@@ -69,7 +71,7 @@ FastAPI + MySQL 异步。目前完成：**注册 / 登录 / 退出 / 查看信�
 
 ---
 
-## 目录结构
+## 目录结构（后续再更新,）
 
 ```
 ec_platform/
