@@ -44,7 +44,8 @@ import app.models.users                                        # noqa: F401, E40
 import app.models.product                                      # noqa: F401, E402  ★ 同理：category / product
 import app.models.favorite
 import app.models.cart
-import app.models.address                                     # noqa: F401, E402  ★ 同理：favorite
+import app.models.address
+import app.models.order                                        # noqa: F401, E402  ★ 同理：order / order_item
 from app.config.app_conf import settings                       # noqa: E402
 from app.config.db_conf import async_engine                    # noqa: E402
 from app.models.base import Base                               # noqa: E402

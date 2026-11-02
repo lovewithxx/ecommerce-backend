@@ -7,19 +7,6 @@ r"""
 文档：
     http://127.0.0.1:8000/docs
 
-=====================================================================
-【为什么必须从项目根目录启动，用 app.main:app 这种写法】
-=====================================================================
-你原来的代码里写的是 `from models.users import User`、`from crud import users`，
-这种导入假设 `app/` 目录本身在 sys.path 里。
-
-后果：
-    从项目根启动 `uvicorn app.main:app` -> ModuleNotFoundError: No module named 'models'
-    必须 cd 进 app/ 才能跑 -> 但那样 .env 又找不到了
-
-本项目的写法把所有导入都改成 `from app.xxx import yyy`，
-所以：从项目根启动，一切正常。记住这个约定，后面所有文件都这么写。
-=====================================================================
 """
 
 import logging
@@ -38,6 +25,7 @@ from app.routers import address as address_router
 from app.routers import cart as cart_router
 from app.routers import category as category_router
 from app.routers import favorite as favorite_router
+from app.routers import order as order_router
 from app.routers import product as product_router
 from app.routers import user as user_router
 from app.untils.exception import register_exception_handlers
@@ -90,6 +78,7 @@ app.include_router(user_router.router)
 app.include_router(favorite_router.router)
 app.include_router(cart_router.router)
 app.include_router(address_router.router)
+app.include_router(order_router.router)
 app.include_router(category_router.router)
 app.include_router(product_router.router)
 

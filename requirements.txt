@@ -21,3 +21,6 @@ python-dotenv>=1.0.0
 # 千万别升到 bcrypt 4.1+，会报 module bcrypt has no attribute __about__
 passlib==1.7.4
 bcrypt==4.0.1
+
+# 数据库迁移：改表结构用它生成版本化 SQL
+alembic>=1.13.0
